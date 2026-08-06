@@ -1,6 +1,9 @@
 # Auto-managed by github-commit-push-all-repos
 *.exe
 *.EXE
+bin/
+uploads/
+.env
 
 # --- auto: github-commit-push-all-repos ---
 # --- end auto ---
