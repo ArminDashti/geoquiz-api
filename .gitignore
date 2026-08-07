@@ -3,10 +3,7 @@
 *.EXE
 bin/
 uploads/
-node_modules/
-dist/
 .env
-*.local
 
 # --- auto: github-commit-push-all-repos ---
 # --- end auto ---

@@ -1,0 +1,6 @@
+.git
+bin
+uploads
+*.exe
+.env
+.cursor
