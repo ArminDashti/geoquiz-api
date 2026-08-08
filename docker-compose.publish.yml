@@ -1,0 +1,8 @@
+# Optional overlay: host port publish (local / explicit publish_port).
+
+services:
+  geoquiz-api:
+    ports:
+      - target: 8080
+        published: ${PUBLISH_PORT:-8094}
+        protocol: tcp

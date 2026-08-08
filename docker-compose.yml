@@ -1,0 +1,57 @@
+name: geoquiz
+
+services:
+  geoquiz-pgsql:
+    image: postgres:16
+    container_name: geoquiz-pgsql
+    environment:
+      POSTGRES_USER: geoquiz
+      POSTGRES_PASSWORD: geoquiz
+      POSTGRES_DB: geoquiz
+    volumes:
+      - geoquiz-pgsql-vol:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - t3-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geoquiz -d geoquiz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  geoquiz-api:
+    image: ${IMAGE_TAG:-geoquiz-api:latest}
+    container_name: geoquiz-api
+    expose:
+      - "8080"
+    environment:
+      ADDR: ":8080"
+      DATABASE_URL: postgres://geoquiz:geoquiz@geoquiz-pgsql:5432/geoquiz?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-change-me-docker-dev-only}
+      INVITE_CODE: ${INVITE_CODE:-armin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-armin@geoquiz.local}
+      UPLOAD_DIR: uploads
+      COUNTRIES_GEOJSON: data/countries.geojson
+      MIGRATIONS_DIR: migrations
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5051,http://127.0.0.1:5051,http://localhost:5173,http://127.0.0.1:5173,https://geo-quiz.xaigrok.ir}
+    volumes:
+      - geoquiz-api-uploads:/app/uploads
+    networks:
+      - t3-net
+    depends_on:
+      geoquiz-pgsql:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  t3-net:
+    name: ${DOCKER_NETWORK:-t3-net}
+    external: true
+
+volumes:
+  geoquiz-pgsql-vol:
+    name: geoquiz-pgsql-vol
+  geoquiz-api-uploads:
+    name: geoquiz-api-uploads

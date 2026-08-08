@@ -1,0 +1,16 @@
+# Remote deploy — behind HAProxy: geo-quiz-api.xaigrok.ir → geoquiz-api:8080 on t3-net.
+
+stack_name: geoquiz
+image_tag: geoquiz-api:latest
+compose_file: ../../docker-compose.yml
+dockerfile: ../../Dockerfile
+docker_network: t3-net
+internal_port: "8080"
+publish_port: ""
+delete_volume: "no"
+delete_image: "yes"
+build_image_on: "local"
+
+ssh: "ssh t3"
+
+volume_dir: "/cloud-admin/docker/geoquiz"

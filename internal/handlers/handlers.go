@@ -106,6 +106,10 @@ func (h *Handler) getUserByEmail(c *gin.Context, email string) (models.User, err
 	return scanUser(h.db.QueryRowContext(c.Request.Context(), userSelect+` WHERE email = $1`, strings.ToLower(email)))
 }
 
+func (h *Handler) getUserByUsername(c *gin.Context, username string) (models.User, error) {
+	return scanUser(h.db.QueryRowContext(c.Request.Context(), userSelect+` WHERE lower(username) = lower($1)`, strings.TrimSpace(username)))
+}
+
 func normalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }

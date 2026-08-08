@@ -17,7 +17,12 @@ import (
 )
 
 func main() {
+	config.LoadDotEnv(".env")
+
 	cfg := config.Load()
+	if cfg.DatabaseURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
 
 	store, err := data.LoadCountries(cfg.GeoJSONPath)
 	if err != nil {
@@ -30,8 +35,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	migrationsDir := envOr("MIGRATIONS_DIR", "migrations")
-	if err := appdb.Migrate(sqlDB, migrationsDir); err != nil {
+	if err := appdb.Migrate(sqlDB, cfg.MigrationsDir); err != nil {
 		log.Fatalf("migrate: %v", err)
 	}
 
@@ -39,6 +43,9 @@ func main() {
 	defer cancel()
 	if err := appdb.SeedInviteCode(ctx, sqlDB, cfg.InviteCode); err != nil {
 		log.Fatalf("seed invite code: %v", err)
+	}
+	if err := appdb.SeedBootstrapUser(ctx, sqlDB, "armin", "armin@geoquiz.local", "dopadopa123", "Armin", "Dashti"); err != nil {
+		log.Fatalf("seed bootstrap user: %v", err)
 	}
 
 	if err := os.MkdirAll(filepath.Join(cfg.UploadDir, "avatars"), 0o755); err != nil {
@@ -49,16 +56,7 @@ func main() {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://localhost:5173",
-			"http://127.0.0.1:5173",
-			"http://localhost:5174",
-			"http://127.0.0.1:5174",
-			"http://localhost:8080",
-			"http://127.0.0.1:8080",
-			"http://localhost",
-			"http://127.0.0.1",
-		},
+		AllowOrigins:     cfg.CORSOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -103,11 +101,4 @@ func main() {
 	if err := r.Run(cfg.Addr); err != nil {
 		log.Fatalf("server: %v", err)
 	}
-}
-
-func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }
